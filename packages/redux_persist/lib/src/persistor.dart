@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:redux/redux.dart';
 import 'package:redux_persist/src/exceptions.dart';
 import 'package:redux_persist/src/serialization.dart';
@@ -104,7 +105,7 @@ class Persistor<T> {
 
       T? state;
       try {
-        state = serializer.decode(data);
+        state = await compute(_decodeState, [serializer, data]);
       } catch (error) {
         throw SerializationException('On load: ${error.toString()}');
       }
@@ -151,7 +152,7 @@ class Persistor<T> {
 
       _printDebug('Serializing');
 
-      var data = serializer.encode(state);
+      var data = await compute(_serializeState, [serializer, state]);
 
       _printDebug('Running save raw transformations');
 
@@ -187,4 +188,16 @@ class Persistor<T> {
       print('Persistor debug: $object');
     }
   }
+}
+
+Uint8List? _serializeState<T>(List<dynamic> params) {
+  final StateSerializer serializer = params[0] as StateSerializer;
+  final dynamic state = params[1];
+  return serializer.encode(state);
+}
+
+T _decodeState<T>(List<dynamic> params) {
+  final StateSerializer serializer = params[0] as StateSerializer;
+  final Uint8List data = params[1] as Uint8List;
+  return serializer.decode(data) as T;
 }
