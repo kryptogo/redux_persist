@@ -106,8 +106,9 @@ class Persistor<T> {
       T? state;
       try {
         state = await compute(_decodeState, [serializer, data]);
-      } catch (error) {
-        throw SerializationException('On load: ${error.toString()}');
+      } catch (error, stackTrace) {
+        throw SerializationException(
+            'On load: ${error.toString()}\n${stackTrace.toString()}');
       }
 
       _printDebug('Running load transformations');
